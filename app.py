@@ -1,49 +1,54 @@
 import streamlit as st
 import tensorflow as tf
-import numpy as np
 from PIL import Image
+import numpy as np
+import gdown
+import os
 
-# Set the page config
-st.set_page_config(page_title="Smart Parking Space Detection", layout="centered")
+st.title("🚗 Smart Parking Space Allocation")
 
-# Load the TFLite model
-@st.cache_resource
-def load_model():
-    interpreter = tf.lite.Interpreter(model_path="smart_parking_model.tflite")
-    interpreter.allocate_tensors()
-    return interpreter
+# Define model file
+MODEL_FILE = "smart_parking_model.tflite"
 
-interpreter = load_model()
+# Google Drive file ID (replace this with your actual ID)
+FILE_ID = "YOUR_GOOGLE_DRIVE_FILE_ID"
+
+# Download model if not present
+if not os.path.exists(MODEL_FILE):
+    st.info("Downloading model from Google Drive...")
+    gdown.download(f"https://drive.google.com/uc?id={FILE_ID}", MODEL_FILE, quiet=False)
+
+# Check model existence
+if not os.path.exists(MODEL_FILE):
+    st.error("❌ Model file not found. Please check the Google Drive link.")
+    st.stop()
+
+# Load TFLite model
+interpreter = tf.lite.Interpreter(model_path=MODEL_FILE)
+interpreter.allocate_tensors()
+
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Define class names (customize as per your dataset)
-class_names = ["Empty", "Occupied"]
+# Upload image
+uploaded_file = st.file_uploader("Upload a parking lot image", type=["jpg", "jpeg", "png"])
 
-# Streamlit UI
-st.title("🚗 Smart Parking Space Detection")
-st.markdown("Upload a parking lot image and the model will detect if the parking space is **occupied** or **empty**.")
-
-uploaded_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    resized_img = image.resize((224, 224))
-
+if uploaded_file:
+    image = Image.open(uploaded_file).convert('RGB')
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    # Preprocessing
-    img_array = np.array(resized_img, dtype=np.float32) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    # Preprocess
+    image_resized = image.resize((224, 224))  # Match your training size
+    input_array = np.expand_dims(np.array(image_resized, dtype=np.float32) / 255.0, axis=0)
 
     # Run inference
-    interpreter.set_tensor(input_details[0]['index'], img_array)
+    interpreter.set_tensor(input_details[0]['index'], input_array)
     interpreter.invoke()
     output = interpreter.get_tensor(output_details[0]['index'])
 
-    pred_index = np.argmax(output)
-    confidence = np.max(output)
+    # Assume output is [free_prob, occupied_prob]
+    class_names = ["Free", "Occupied"]
+    prediction = np.argmax(output)
 
-    # Display result
-    st.subheader("🧠 Prediction:")
-    st.success(f"**{class_names[pred_index]}** ({confidence*100:.2f}%)")
+    st.subheader("📊 Prediction")
+    st.success(f"Predicted Status: **{class_names[prediction]}**")
