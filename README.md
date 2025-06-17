@@ -3,7 +3,7 @@
 
 This project is a simple AI-powered web app that detects whether a parking space is **Occupied** or **Empty** from an image.
 
-##DATASET
+## DATASET
 https://www.kaggle.com/datasets/trainingdatapro/parking-space-detection-dataset
 
 ## 📦 Features
