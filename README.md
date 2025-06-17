@@ -3,6 +3,9 @@
 
 This project is a simple AI-powered web app that detects whether a parking space is **Occupied** or **Empty** from an image.
 
+##DATASET
+https://www.kaggle.com/datasets/trainingdatapro/parking-space-detection-dataset
+
 ## 📦 Features
 - Built with **Streamlit**
 - Uses a **TFLite model** optimized for deployment
@@ -13,3 +16,4 @@ This project is a simple AI-powered web app that detects whether a parking space
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+
